@@ -38,8 +38,8 @@ func GetViewMatrix(camera *Camera) mgl32.Mat4 {
 
 func (camera *Camera) updateCameraVectors() {
 	fx := math32.Cos(mgl32.DegToRad(camera.Yaw)) * math32.Cos(mgl32.DegToRad(camera.Pitch))
-	fy := math32.Sin(mgl32.DegToRad(camera.Yaw)) * math32.Cos(mgl32.DegToRad(camera.Pitch))
-	fz := math32.Sin(mgl32.DegToRad(camera.Pitch))
+	fy := math32.Sin(mgl32.DegToRad(camera.Pitch))
+	fz := math32.Sin(mgl32.DegToRad(camera.Yaw)) * math32.Cos(mgl32.DegToRad(camera.Pitch))
 
 	camera.Front = mgl32.Vec3{fx, fy, fz}.Normalize()
 	camera.Right = camera.Front.Cross(camera.WorldUp).Normalize()
