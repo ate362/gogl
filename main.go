@@ -1,125 +1,254 @@
-// package main
+package main
 
-// import (
-// 	"log"
-// 	"runtime"
+/*
+Adapted from this tutorial: http://www.learnopengl.com/#!Lighting/Colors
 
-// 	"io/ioutil"
+Shows how the basic usage of color for 3D objects
+*/
 
-// 	"HelloWorldGL/shader"
+import (
+	"log"
+	"runtime"
 
-// 	"github.com/go-gl/gl/v4.6-core/gl"
-// 	"github.com/go-gl/glfw/v3.3/glfw"
-// )
+	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 
-// const (
-// 	width  = 800
-// 	height = 600
-// )
+	"WaterSimulation/cam"
+	"WaterSimulation/gfx"
+	"WaterSimulation/win"
+)
 
-// var (
-// 	triangle = []float32{
-// 		0, 0.5, 0, 1.0, 0.0, 0.0, // top
-// 		-0.5, -0.5, 0, 0.0, 1.0, 0.0, // left
-// 		0.5, -0.5, 0, 0.0, 0.0, 1.0, // right
-// 	}
-// )
+// vertices to draw 6 faces of a cube
+var cubeVertices = []float32{
+	// position        // texture position
+	-0.5, -0.5, -0.5, 0.0, 0.0,
+	0.5, -0.5, -0.5, 1.0, 0.0,
+	0.5, 0.5, -0.5, 1.0, 1.0,
+	0.5, 0.5, -0.5, 1.0, 1.0,
+	-0.5, 0.5, -0.5, 0.0, 1.0,
+	-0.5, -0.5, -0.5, 0.0, 0.0,
 
-// // initGlfw initializes glfw and returns a Window to use.
-// func initGlfw() *glfw.Window {
-// 	if err := glfw.Init(); err != nil {
-// 		panic(err)
-// 	}
+	-0.5, -0.5, 0.5, 0.0, 0.0,
+	0.5, -0.5, 0.5, 1.0, 0.0,
+	0.5, 0.5, 0.5, 1.0, 1.0,
+	0.5, 0.5, 0.5, 1.0, 1.0,
+	-0.5, 0.5, 0.5, 0.0, 1.0,
+	-0.5, -0.5, 0.5, 0.0, 0.0,
 
-// 	glfw.WindowHint(glfw.Resizable, glfw.False)
-// 	glfw.WindowHint(glfw.ContextVersionMajor, 4) // OR 2
-// 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
-// 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-// 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+	-0.5, 0.5, 0.5, 1.0, 0.0,
+	-0.5, 0.5, -0.5, 1.0, 1.0,
+	-0.5, -0.5, -0.5, 0.0, 1.0,
+	-0.5, -0.5, -0.5, 0.0, 1.0,
+	-0.5, -0.5, 0.5, 0.0, 0.0,
+	-0.5, 0.5, 0.5, 1.0, 0.0,
 
-// 	window, err := glfw.CreateWindow(width, height, "Hello World!", nil, nil)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	window.MakeContextCurrent()
+	0.5, 0.5, 0.5, 1.0, 0.0,
+	0.5, 0.5, -0.5, 1.0, 1.0,
+	0.5, -0.5, -0.5, 0.0, 1.0,
+	0.5, -0.5, -0.5, 0.0, 1.0,
+	0.5, -0.5, 0.5, 0.0, 0.0,
+	0.5, 0.5, 0.5, 1.0, 0.0,
 
-// 	return window
-// }
+	-0.5, -0.5, -0.5, 0.0, 1.0,
+	0.5, -0.5, -0.5, 1.0, 1.0,
+	0.5, -0.5, 0.5, 1.0, 0.0,
+	0.5, -0.5, 0.5, 1.0, 0.0,
+	-0.5, -0.5, 0.5, 0.0, 0.0,
+	-0.5, -0.5, -0.5, 0.0, 1.0,
 
-// // initOpenGL initializes OpenGL and returns an intiialized program.
-// func initOpenGL() uint32 {
-// 	if err := gl.Init(); err != nil {
-// 		panic(err)
-// 	}
-// 	version := gl.GoStr(gl.GetString(gl.VERSION))
-// 	log.Println("OpenGL version", version)
+	-0.5, 0.5, -0.5, 0.0, 1.0,
+	0.5, 0.5, -0.5, 1.0, 1.0,
+	0.5, 0.5, 0.5, 1.0, 0.0,
+	0.5, 0.5, 0.5, 1.0, 0.0,
+	-0.5, 0.5, 0.5, 0.0, 0.0,
+	-0.5, 0.5, -0.5, 0.0, 1.0,
+}
 
-// 	vShader, verr := ioutil.ReadFile("shader/vertexShader.glsl")
-// 	vShaderStr := string(vShader) + "\x00"
-// 	pShader, perr := ioutil.ReadFile("shader/fragmentShader.glsl")
-// 	pShaderStr := string(pShader) + "\x00"
+var cubePositions = [][]float32{
+	{0.0, 0.0, -3.0},
+	{2.0, 5.0, -15.0},
+	{-1.5, -2.2, -2.5},
+	{-3.8, -2.0, -12.3},
+	{2.4, -0.4, -3.5},
+	{-1.7, 3.0, -7.5},
+	{1.3, -2.0, -2.5},
+	{1.5, 2.0, -2.5},
+	{1.5, 0.2, -1.5},
+	{-1.3, 1.0, -1.5},
+}
 
-// 	if verr != nil || perr != nil {
-// 		log.Fatal(verr, perr)
-// 	}
+func init() {
+	// GLFW event handling must be run on the main OS thread
+	runtime.LockOSThread()
+}
 
-// 	vertexShader, err := shader.CompileShader(vShaderStr, gl.VERTEX_SHADER)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	fragmentShader, err := shader.CompileShader(pShaderStr, gl.FRAGMENT_SHADER)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+func main() {
+	if err := glfw.Init(); err != nil {
+		log.Fatalln("failed to inifitialize glfw:", err)
+	}
+	defer glfw.Terminate()
 
-// 	prog := gl.CreateProgram()
-// 	gl.AttachShader(prog, vertexShader)
-// 	gl.AttachShader(prog, fragmentShader)
-// 	gl.LinkProgram(prog)
-// 	return prog
-// }
+	glfw.WindowHint(glfw.Resizable, glfw.False)
+	glfw.WindowHint(glfw.ContextVersionMajor, 4)
+	glfw.WindowHint(glfw.ContextVersionMinor, 1)
+	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-// func makeVao(points []float32) uint32 {
-// 	var vbo uint32
-// 	gl.GenBuffers(1, &vbo)
-// 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-// 	gl.BufferData(gl.ARRAY_BUFFER, 4*len(points), gl.Ptr(points), gl.STATIC_DRAW)
+	window := win.NewWindow(1280, 720, "colors")
 
-// 	var vao uint32
-// 	gl.GenVertexArrays(1, &vao)
-// 	gl.BindVertexArray(vao)
+	// Initialize Glow (go function bindings)
+	if err := gl.Init(); err != nil {
+		panic(err)
+	}
 
-// 	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, 6*4, 0)
-// 	gl.EnableVertexAttribArray(0)
+	err := programLoop(window)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
 
-// 	gl.VertexAttribPointerWithOffset(1, 3, gl.FLOAT, false, 6*4, 3*4)
-// 	gl.EnableVertexAttribArray(1)
+/*
+ * Creates the Vertex Array Object for a triangle.
+ * indices is leftover from earlier samples and not used here.
+ */
+func createVAO(vertices []float32, indices []uint32) uint32 {
 
-// 	return vao
-// }
+	var VAO uint32
+	gl.GenVertexArrays(1, &VAO)
 
-// func main() {
-// 	runtime.LockOSThread()
+	var VBO uint32
+	gl.GenBuffers(1, &VBO)
 
-// 	window := initGlfw()
-// 	defer glfw.Terminate()
+	var EBO uint32
+	gl.GenBuffers(1, &EBO)
 
-// 	program := initOpenGL()
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointers()
+	gl.BindVertexArray(VAO)
 
-// 	vao := makeVao(triangle)
-// 	for !window.ShouldClose() {
-// 		draw(vao, window, program)
-// 	}
-// }
+	// copy vertices data into VBO (it needs to be bound first)
+	gl.BindBuffer(gl.ARRAY_BUFFER, VBO)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-// func draw(vao uint32, window *glfw.Window, program uint32) {
-// 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-// 	gl.UseProgram(program)
+	// size of one whole vertex (sum of attrib sizes)
+	var stride int32 = 3*4 + 2*4
+	var offset int = 0
 
-// 	gl.BindVertexArray(vao)
-// 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(triangle)/3))
+	// position
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, stride, gl.PtrOffset(offset))
+	gl.EnableVertexAttribArray(0)
+	offset += 3 * 4
 
-// 	glfw.SwapInterval(1)
-// 	glfw.WaitEvents()
-// 	window.SwapBuffers()
-// }
+	// unbind the VAO (safe practice so we don't accidentally (mis)configure it later)
+	gl.BindVertexArray(0)
+
+	return VAO
+}
+
+func programLoop(window *win.Window) error {
+
+	// the linked shader program determines how the data will be rendered
+	vertShader, err := gfx.NewShaderFromFile("shaders/basic.vert", gl.VERTEX_SHADER)
+	if err != nil {
+		return err
+	}
+
+	fragShader, err := gfx.NewShaderFromFile("shaders/basic.frag", gl.FRAGMENT_SHADER)
+	if err != nil {
+		return err
+	}
+
+	program, err := gfx.NewProgram(vertShader, fragShader)
+	if err != nil {
+		return err
+	}
+	defer program.Delete()
+
+	lightFragShader, err := gfx.NewShaderFromFile("shaders/light.frag", gl.FRAGMENT_SHADER)
+	if err != nil {
+		return err
+	}
+
+	// special shader program so that lights themselves are not affected by lighting
+	lightProgram, err := gfx.NewProgram(vertShader, lightFragShader)
+	if err != nil {
+		return err
+	}
+
+	VAO := createVAO(cubeVertices, nil)
+	lightVAO := createVAO(cubeVertices, nil)
+
+	// ensure that triangles that are "behind" others do not draw over top of them
+	gl.Enable(gl.DEPTH_TEST)
+
+	camera := cam.NewFpsCamera(mgl32.Vec3{0, 0, 3}, mgl32.Vec3{0, 1, 0}, -90, 0, window.InputManager())
+
+	for !window.ShouldClose() {
+
+		// swaps in last buffer, polls for window events, and generally sets up for a new render frame
+		window.StartFrame()
+
+		// update camera position and direction from input evevnts
+		camera.Update(window.SinceLastFrame())
+
+		// background color
+		gl.ClearColor(0, 0, 0, 1.0)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT) // depth buffer needed for DEPTH_TEST
+
+		// cube rotation matrices
+		rotateX := (mgl32.Rotate3DX(mgl32.DegToRad(-60 * float32(glfw.GetTime()))))
+		rotateY := (mgl32.Rotate3DY(mgl32.DegToRad(-60 * float32(glfw.GetTime()))))
+		rotateZ := (mgl32.Rotate3DZ(mgl32.DegToRad(-60 * float32(glfw.GetTime()))))
+
+		// creates perspective
+		fov := float32(60.0)
+		projectTransform := mgl32.Perspective(mgl32.DegToRad(fov),
+			float32(window.Width())/float32(window.Height()),
+			0.1,
+			100.0)
+
+		camTransform := camera.GetTransform()
+		lightPos := mgl32.Vec3{1.2, 1, 2}
+		lightTransform := mgl32.Translate3D(lightPos.X(), lightPos.Y(), lightPos.Z()).Mul4(
+			mgl32.Scale3D(0.2, 0.2, 0.2))
+
+		program.Use()
+		gl.UniformMatrix4fv(program.GetUniformLocation("camera"), 1, false, &camTransform[0])
+		gl.UniformMatrix4fv(program.GetUniformLocation("project"), 1, false,
+			&projectTransform[0])
+
+		gl.BindVertexArray(VAO)
+
+		// draw each cube after all coordinate system transforms are bound
+
+		// obj is colored, light is white
+		gl.Uniform3f(program.GetUniformLocation("objectColor"), 1.0, 0.5, 0.31)
+		gl.Uniform3f(program.GetUniformLocation("lightColor"), 1.0, 1.0, 1.0)
+
+		for _, pos := range cubePositions {
+			worldTranslate := mgl32.Translate3D(pos[0], pos[1], pos[2])
+			worldTransform := (worldTranslate.Mul4(rotateX.Mul3(rotateY).Mul3(rotateZ).Mat4()))
+
+			gl.UniformMatrix4fv(program.GetUniformLocation("world"), 1, false,
+				&worldTransform[0])
+
+			gl.DrawArrays(gl.TRIANGLES, 0, 36)
+		}
+		gl.BindVertexArray(0)
+
+		// Draw the light obj after the other boxes using its separate shader program
+		// this means that we must re-bind any uniforms
+		lightProgram.Use()
+		gl.BindVertexArray(lightVAO)
+		gl.UniformMatrix4fv(lightProgram.GetUniformLocation("world"), 1, false, &lightTransform[0])
+		gl.UniformMatrix4fv(lightProgram.GetUniformLocation("camera"), 1, false, &camTransform[0])
+		gl.UniformMatrix4fv(lightProgram.GetUniformLocation("project"), 1, false, &projectTransform[0])
+		gl.DrawArrays(gl.TRIANGLES, 0, 36)
+
+		gl.BindVertexArray(0)
+
+		// end of draw loop
+	}
+
+	return nil
+}
