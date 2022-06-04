@@ -18,6 +18,8 @@ func InitGlfw(width int, height int, hint string) *glfw.Window {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
+	//SetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+
 	window, err := glfw.CreateWindow(width, height, hint, nil, nil)
 	if err != nil {
 		panic(err)
@@ -65,7 +67,6 @@ func Clear(r float32, g float32, b float32, a float32) {
 }
 
 func SwapBuffers(win *glfw.Window) {
-	glfw.WaitEvents()
 	glfw.SwapInterval(1)
 	win.SwapBuffers()
 }
