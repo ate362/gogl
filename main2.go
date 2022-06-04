@@ -20,8 +20,13 @@ import (
 func main() {
 	runtime.LockOSThread()
 	window := scene.InitGlfw(800, 600, "Water Simulation")
-	camera := scene.InitCamera(0, 2, 5, 0.0, 1.0, 0.0, -90.0, -15.0)
-	// log.Println(camera)
+	camera := scene.InitCamera(0, 0, 5, 0.0, 1.0, 0.0, -90.0, 0.0)
+	deltaTime := 0.0
+	var dTime *float64 = &deltaTime
+	event := scene.Init(camera, dTime)
+
+	window.SetKeyCallback(event.KeyCallback)
+	window.SetCursorPosCallback(event.MouseCallback)
 
 	defer glfw.Terminate()
 
@@ -34,14 +39,13 @@ func main() {
 
 	gl.UseProgram(program)
 
-	projection := mgl32.Perspective(mgl32.DegToRad(45.0), float32(800)/600, 0.1, 10.0)
+	projection := mgl32.Perspective(mgl32.DegToRad(45.0), float32(800)/600, 0.1, 100.0)
 	projectionUniform := gl.GetUniformLocation(program, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
 
-	camerav := scene.GetViewMatrix(camera)
-
+	fView := scene.GetViewMatrix(camera)
 	cameraUniform := gl.GetUniformLocation(program, gl.Str("camera\x00"))
-	gl.UniformMatrix4fv(cameraUniform, 1, false, &camerav[0])
+	gl.UniformMatrix4fv(cameraUniform, 1, false, &fView[0])
 
 	model := mgl32.Ident4()
 	modelUniform := gl.GetUniformLocation(program, gl.Str("model\x00"))
@@ -81,11 +85,33 @@ func main() {
 	gl.DepthFunc(gl.LESS)
 	gl.ClearColor(1.0, 1.0, 1.0, 1.0)
 
+	lastTime := glfw.GetTime()
+	fpsTime := glfw.GetTime()
+	nbFrames := 0
+	deltaFPS := 0.0
+
 	for !window.ShouldClose() {
 		scene.Clear(0.0, 0.0, 0.0, 1.0)
+		glfw.PollEvents()
+
+		currentTime := glfw.GetTime()
+
+		deltaTime = currentTime - lastTime
+		lastTime = currentTime
+
+		deltaFPS = currentTime - fpsTime
+		nbFrames++
+		if deltaFPS >= 1.0 {
+			window.SetTitle(fmt.Sprintf("Water Simulation %f fps", float64(nbFrames)))
+			nbFrames = 0
+			fpsTime = currentTime
+		}
 
 		gl.UseProgram(program)
 		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
+
+		fView := scene.GetViewMatrix(camera)
+		gl.UniformMatrix4fv(cameraUniform, 1, false, &fView[0])
 
 		gl.BindVertexArray(vao)
 
@@ -93,7 +119,6 @@ func main() {
 		gl.BindTexture(gl.TEXTURE_2D, texture)
 
 		gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
-
 		scene.SwapBuffers(window)
 	}
 }
