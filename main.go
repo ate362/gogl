@@ -11,7 +11,7 @@ import (
 	"runtime"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 
 	"WaterSimulation/cam"
@@ -101,7 +101,7 @@ func main() {
 	}
 }
 
-func createMesh(vertices []float32, indices []int32) uint32 {
+func createMesh(geo *objects.Geometry, s int, o int) uint32 {
 
 	var VAO uint32
 	gl.GenVertexArrays(1, &VAO)
@@ -117,18 +117,17 @@ func createMesh(vertices []float32, indices []int32) uint32 {
 
 	// copy vertices data into VBO (it needs to be bound first)
 	gl.BindBuffer(gl.ARRAY_BUFFER, VBO)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.DYNAMIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(geo.Vertices)*4, gl.Ptr(geo.Vertices), gl.DYNAMIC_DRAW)
 
 	gl.GenBuffers(1, &EBO)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indices)*4, gl.Ptr(indices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geo.Indices)*4, gl.Ptr(geo.Indices), gl.STATIC_DRAW)
 
-	var stride int32 = 3*4 + 2*4 + 3*4 + 3*4
+	var stride int32 = int32(o)
 	var offset uintptr = 0
 
 	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, stride, offset)
 	gl.EnableVertexAttribArray(0)
-	offset += 3 * 4
 
 	// unbind the VAO (safe practice so we don't accidentally (mis)configure it later)
 	gl.BindVertexArray(0)
@@ -203,9 +202,11 @@ func programLoop(window *win.Window) error {
 	if err != nil {
 		return err
 	}
+	defer lightProgram.Delete()
 
-	wvertices, windices := objects.GenneratePlane(50, 50, 200, 200)
-	VAO := createMesh(wvertices, windices)
+	Water := objects.GenneratePlane(50, 50, 200, 200)
+	VAO := createMesh(Water, 3*2*3*3*4, 3*4+2*4+3*4+3*4)
+	log.Println(VAO)
 	lightVAO := createVAO(cubeVertices, nil)
 
 	// ensure that triangles that are "behind" others do not draw over top of them
@@ -233,7 +234,7 @@ func programLoop(window *win.Window) error {
 			100.0)
 
 		camTransform := camera.GetTransform()
-		lightPos := mgl32.Vec3{1.2, 1, 2}
+		lightPos := mgl32.Vec3{0, 1, 0}
 		lightTransform := mgl32.Translate3D(lightPos.X(), lightPos.Y(), lightPos.Z()).Mul4(
 			mgl32.Scale3D(.25, .25, .25))
 
@@ -256,7 +257,7 @@ func programLoop(window *win.Window) error {
 		// gl.DrawArrays(gl.POINTS, 0, int32(len(windices)))
 
 		//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-		gl.DrawElements(gl.TRIANGLES, int32(len(windices)), gl.UNSIGNED_INT, nil)
+		gl.DrawElements(gl.TRIANGLES, int32(len(Water.Indices)), gl.UNSIGNED_INT, nil)
 
 		gl.BindVertexArray(0)
 
