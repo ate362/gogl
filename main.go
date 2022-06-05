@@ -71,19 +71,6 @@ var cubeVertices = []float32{
 	1.0, 1.0, 1.0, 0.0, 1.0,
 }
 
-var cubePositions = [][]float32{
-	{0.0, 5.0, -3.0},
-	{2.0, 5.0, -15.0},
-	{-1.5, -2.2, -2.5},
-	{-3.8, -2.0, -12.3},
-	{2.4, -0.4, -3.5},
-	{-1.7, 3.0, -7.5},
-	{1.3, -2.0, -2.5},
-	{1.5, 2.0, -2.5},
-	{1.5, 0.2, -1.5},
-	{-1.3, 1.0, -1.5},
-}
-
 func init() {
 	// GLFW event handling must be run on the main OS thread
 	runtime.LockOSThread()
@@ -103,10 +90,6 @@ func main() {
 
 	window := win.NewWindow(1280, 720, "Water Simulation")
 
-	var wVertices, wIndices = objects.GenneratePlane(50, 50, 200, 200)
-	log.Println("Water vertices:", len(*wVertices))
-	log.Println("Water indices:", len(*wIndices))
-
 	// Initialize Glow (go function bindings)
 	if err := gl.Init(); err != nil {
 		panic(err)
@@ -116,6 +99,41 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func createMesh(vertices []float32, indices []int32) uint32 {
+
+	var VAO uint32
+	gl.GenVertexArrays(1, &VAO)
+
+	var VBO uint32
+	gl.GenBuffers(1, &VBO)
+
+	var EBO uint32
+	gl.GenBuffers(1, &EBO)
+
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointers()
+	gl.BindVertexArray(VAO)
+
+	// copy vertices data into VBO (it needs to be bound first)
+	gl.BindBuffer(gl.ARRAY_BUFFER, VBO)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.DYNAMIC_DRAW)
+
+	gl.GenBuffers(1, &EBO)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indices)*4, gl.Ptr(indices), gl.STATIC_DRAW)
+
+	var stride int32 = 3*4 + 2*4 + 3*4 + 3*4
+	var offset uintptr = 0
+
+	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, stride, offset)
+	gl.EnableVertexAttribArray(0)
+	offset += 3 * 4
+
+	// unbind the VAO (safe practice so we don't accidentally (mis)configure it later)
+	gl.BindVertexArray(0)
+
+	return VAO
 }
 
 /*
@@ -180,13 +198,14 @@ func programLoop(window *win.Window) error {
 		return err
 	}
 
-	// special shader program so that lights themselves are not affected by lighting
+	//special shader program so that lights themselves are not affected by lighting
 	lightProgram, err := gfx.NewProgram(vertShader, lightFragShader)
 	if err != nil {
 		return err
 	}
 
-	VAO := createVAO(cubeVertices, nil)
+	wvertices, windices := objects.GenneratePlane(50, 50, 200, 200)
+	VAO := createMesh(wvertices, windices)
 	lightVAO := createVAO(cubeVertices, nil)
 
 	// ensure that triangles that are "behind" others do not draw over top of them
@@ -205,13 +224,6 @@ func programLoop(window *win.Window) error {
 		// background color
 		gl.ClearColor(0, 0, 0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT) // depth buffer needed for DEPTH_TEST
-
-		// Generate Geometry
-
-		// cube rotation matrices
-		rotateX := (mgl32.Rotate3DX(mgl32.DegToRad(-60 * float32(glfw.GetTime()))))
-		rotateY := (mgl32.Rotate3DY(mgl32.DegToRad(-60 * float32(glfw.GetTime()))))
-		rotateZ := (mgl32.Rotate3DZ(mgl32.DegToRad(-60 * float32(glfw.GetTime()))))
 
 		// creates perspective
 		fov := float32(60.0)
@@ -233,21 +245,19 @@ func programLoop(window *win.Window) error {
 		gl.BindVertexArray(VAO)
 
 		// draw each cube after all coordinate system transforms are bound
+		model := mgl32.Vec3{0, 0, 0}
+		modelTransform := mgl32.Translate3D(model.X(), model.Y(), model.Z()).Mul4(mgl32.Scale3D(.25, .25, .25))
+
+		gl.UniformMatrix4fv(program.GetUniformLocation("world"), 1, false, &modelTransform[0])
 
 		// obj is colored, light is white
 		gl.Uniform3f(program.GetUniformLocation("objectColor"), 1.0, 0.5, 0.31)
 		gl.Uniform3f(program.GetUniformLocation("lightColor"), 1.0, 1.0, 1.0)
+		// gl.DrawArrays(gl.POINTS, 0, int32(len(windices)))
 
-		for _, pos := range cubePositions {
-			worldTranslate := mgl32.Translate3D(pos[0], pos[1], pos[2])
-			worldTransform := (worldTranslate.Mul4(rotateX.Mul3(rotateY).Mul3(rotateZ).Mat4().Mul4(
-				mgl32.Scale3D(.5, .5, .5))))
+		//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+		gl.DrawElements(gl.TRIANGLES, int32(len(windices)), gl.UNSIGNED_INT, nil)
 
-			gl.UniformMatrix4fv(program.GetUniformLocation("world"), 1, false,
-				&worldTransform[0])
-
-			gl.DrawArrays(gl.TRIANGLES, 0, 36)
-		}
 		gl.BindVertexArray(0)
 
 		// Draw the light obj after the other boxes using its separate shader program
@@ -259,7 +269,7 @@ func programLoop(window *win.Window) error {
 		gl.UniformMatrix4fv(lightProgram.GetUniformLocation("project"), 1, false, &projectTransform[0])
 		gl.DrawArrays(gl.TRIANGLES, 0, 36)
 
-		gl.BindVertexArray(0)
+		// gl.BindVertexArray(0)
 
 		// end of draw loop
 	}

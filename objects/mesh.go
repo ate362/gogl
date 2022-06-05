@@ -3,8 +3,8 @@ package objects
 import "github.com/go-gl/mathgl/mgl32"
 
 type Vertex struct {
-	position mgl32.Vec3
-	texCoord mgl32.Vec2
-	normal   mgl32.Vec3
-	tangent  mgl32.Vec3
+	Position mgl32.Vec3
+	TexCoord mgl32.Vec2
+	Normal   mgl32.Vec3
+	Tangent  mgl32.Vec3
 }
