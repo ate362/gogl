@@ -1,6 +1,7 @@
 package win
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -15,6 +16,8 @@ type Window struct {
 	firstFrame    bool
 	dTime         float64
 	lastFrameTime float64
+	fps           int
+	startTime     float64
 }
 
 func (w *Window) InputManager() *InputManager {
@@ -42,6 +45,8 @@ func NewWindow(width, height int, title string) *Window {
 		glfw:         gWindow,
 		inputManager: im,
 		firstFrame:   true,
+		fps:          0,
+		startTime:    glfw.GetTime(),
 	}
 }
 
@@ -63,6 +68,7 @@ func (w *Window) ShouldClose() bool {
 func (w *Window) StartFrame() {
 	// swap in the previous rendered buffer
 	w.glfw.SwapBuffers()
+	glfw.SwapInterval(1)
 
 	// poll for UI window events
 	glfw.PollEvents()
@@ -80,6 +86,13 @@ func (w *Window) StartFrame() {
 		w.firstFrame = false
 	}
 
+	w.fps++
+	if curFrameTime-w.startTime > 1 {
+		w.setTitle("Water Simulation FPS: " + fmt.Sprintf("%d", w.fps))
+		w.fps = 0
+		w.startTime = curFrameTime
+	}
+
 	w.dTime = curFrameTime - w.lastFrameTime
 	w.lastFrameTime = curFrameTime
 
@@ -88,4 +101,8 @@ func (w *Window) StartFrame() {
 
 func (w *Window) SinceLastFrame() float64 {
 	return w.dTime
+}
+
+func (w *Window) setTitle(title string) {
+	w.glfw.SetTitle(title)
 }

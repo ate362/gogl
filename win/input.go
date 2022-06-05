@@ -13,6 +13,8 @@ const (
 	PLAYER_BACKWARD Action = iota
 	PLAYER_LEFT     Action = iota
 	PLAYER_RIGHT    Action = iota
+	PLAYER_UP       Action = iota
+	PLAYER_DOWN     Action = iota
 	PROGRAM_QUIT    Action = iota
 )
 
@@ -33,6 +35,8 @@ func NewInputManager() *InputManager {
 		PLAYER_BACKWARD: glfw.KeyS,
 		PLAYER_LEFT:     glfw.KeyA,
 		PLAYER_RIGHT:    glfw.KeyD,
+		PLAYER_UP:       glfw.KeyE,
+		PLAYER_DOWN:     glfw.KeyQ,
 		PROGRAM_QUIT:    glfw.KeyEscape,
 	}
 

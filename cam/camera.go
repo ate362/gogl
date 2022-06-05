@@ -65,6 +65,12 @@ func (c *FpsCamera) updatePosition(dTime float64) {
 	if c.inputManager.IsActive(win.PLAYER_RIGHT) {
 		c.pos = c.pos.Add(c.front.Cross(c.up).Normalize().Mul(adjustedSpeed))
 	}
+	if c.inputManager.IsActive(win.PLAYER_UP) {
+		c.pos = c.pos.Add(mgl32.Vec3{0, 1, 0}.Mul(adjustedSpeed))
+	}
+	if c.inputManager.IsActive(win.PLAYER_DOWN) {
+		c.pos = c.pos.Add(mgl32.Vec3{0, 1, 0}.Mul(adjustedSpeed).Mul(-1))
+	}
 }
 
 // UpdateCursor updates the direction of the camera by giving it delta x/y values

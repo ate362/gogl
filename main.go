@@ -95,7 +95,7 @@ func main() {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-	window := win.NewWindow(1280, 720, "colors")
+	window := win.NewWindow(1280, 720, "Water Simulation")
 
 	// Initialize Glow (go function bindings)
 	if err := gl.Init(); err != nil {
@@ -132,10 +132,11 @@ func createVAO(vertices []float32, indices []uint32) uint32 {
 
 	// size of one whole vertex (sum of attrib sizes)
 	var stride int32 = 3*4 + 2*4
-	var offset int = 0
+	var offset uintptr = 0
 
 	// position
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, stride, gl.PtrOffset(offset))
+
+	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, stride, offset)
 	gl.EnableVertexAttribArray(0)
 	offset += 3 * 4
 
