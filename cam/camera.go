@@ -66,10 +66,10 @@ func (c *FpsCamera) updatePosition(dTime float64) {
 		c.pos = c.pos.Add(c.front.Cross(c.up).Normalize().Mul(adjustedSpeed))
 	}
 	if c.inputManager.IsActive(win.PLAYER_UP) {
-		c.pos = c.pos.Add(mgl32.Vec3{0, 1, 0}.Mul(adjustedSpeed))
+		c.pos = c.pos.Add(c.worldUp.Mul(adjustedSpeed))
 	}
 	if c.inputManager.IsActive(win.PLAYER_DOWN) {
-		c.pos = c.pos.Add(mgl32.Vec3{0, 1, 0}.Mul(adjustedSpeed).Mul(-1))
+		c.pos = c.pos.Sub(c.worldUp.Mul(adjustedSpeed))
 	}
 }
 
@@ -78,8 +78,8 @@ func (c *FpsCamera) updatePosition(dTime float64) {
 func (c *FpsCamera) updateDirection() {
 	dCursor := c.inputManager.CursorChange()
 
-	dx := -c.cursorSensitivity * dCursor[0]
-	dy := c.cursorSensitivity * dCursor[1]
+	dx := c.cursorSensitivity * dCursor[0]
+	dy := -c.cursorSensitivity * dCursor[1]
 
 	c.pitch += dy
 	if c.pitch > 89.0 {
@@ -101,7 +101,7 @@ func (c *FpsCamera) updateVectors() {
 
 	// Gram-Schmidt process to figure out right and up vectors
 	c.right = c.worldUp.Cross(c.front).Normalize()
-	c.up = c.right.Cross(c.front).Normalize()
+	c.up = c.front.Cross(c.right)
 }
 
 // GetCameraTransform gets the matrix to transform from world coordinates to
