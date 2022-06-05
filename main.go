@@ -16,6 +16,7 @@ import (
 
 	"WaterSimulation/cam"
 	"WaterSimulation/gfx"
+	"WaterSimulation/objects"
 	"WaterSimulation/win"
 )
 
@@ -101,6 +102,10 @@ func main() {
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
 	window := win.NewWindow(1280, 720, "Water Simulation")
+
+	var wVertices, wIndices = objects.GenneratePlane(50, 50, 200, 200)
+	log.Println("Water vertices:", len(*wVertices))
+	log.Println("Water indices:", len(*wIndices))
 
 	// Initialize Glow (go function bindings)
 	if err := gl.Init(); err != nil {
@@ -200,6 +205,8 @@ func programLoop(window *win.Window) error {
 		// background color
 		gl.ClearColor(0, 0, 0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT) // depth buffer needed for DEPTH_TEST
+
+		// Generate Geometry
 
 		// cube rotation matrices
 		rotateX := (mgl32.Rotate3DX(mgl32.DegToRad(-60 * float32(glfw.GetTime()))))
