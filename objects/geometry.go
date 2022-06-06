@@ -1,16 +1,16 @@
 package objects
 
 type Geometry struct {
-	Vertices     []float32
-	Indices      []int32
-	SizeOfVertex int
-	Offset       int
+	Vertices      []float32
+	Indices       []int32
+	LenOfVertices int
 }
 
 func GenneratePlane(width int, depth int, m int, n int) *Geometry {
 
 	vertices := []float32{}
 	indices := []int32{}
+	LenOfVertices := m * n
 
 	halfWidth := 0.5 * float32(width)
 	halfDepth := 0.5 * float32(depth)
@@ -56,7 +56,7 @@ func GenneratePlane(width int, depth int, m int, n int) *Geometry {
 		}
 	}
 
-	geo := Geometry{vertices, indices, 4, 3*4 + 2*4 + 3*4 + 3*4}
+	geo := Geometry{vertices, indices, LenOfVertices}
 
 	return &geo
 }

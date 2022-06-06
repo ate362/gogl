@@ -17,6 +17,7 @@ import (
 	"WaterSimulation/cam"
 	"WaterSimulation/gfx"
 	"WaterSimulation/objects"
+	"WaterSimulation/waves"
 	"WaterSimulation/win"
 )
 
@@ -101,40 +102,6 @@ func main() {
 	}
 }
 
-func createMesh(geo *objects.Geometry, s int, o int) uint32 {
-
-	var VAO uint32
-	gl.GenVertexArrays(1, &VAO)
-
-	var VBO uint32
-	gl.GenBuffers(1, &VBO)
-
-	var EBO uint32
-	gl.GenBuffers(1, &EBO)
-
-	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointers()
-	gl.BindVertexArray(VAO)
-
-	// copy vertices data into VBO (it needs to be bound first)
-	gl.BindBuffer(gl.ARRAY_BUFFER, VBO)
-	gl.BufferData(gl.ARRAY_BUFFER, len(geo.Vertices)*4, gl.Ptr(geo.Vertices), gl.DYNAMIC_DRAW)
-
-	gl.GenBuffers(1, &EBO)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(geo.Indices)*4, gl.Ptr(geo.Indices), gl.STATIC_DRAW)
-
-	var stride int32 = int32(o)
-	var offset uintptr = 0
-
-	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, stride, offset)
-	gl.EnableVertexAttribArray(0)
-
-	// unbind the VAO (safe practice so we don't accidentally (mis)configure it later)
-	gl.BindVertexArray(0)
-
-	return VAO
-}
-
 /*
  * Creates the Vertex Array Object for a triangle.
  * indices is leftover from earlier samples and not used here.
@@ -205,14 +172,16 @@ func programLoop(window *win.Window) error {
 	defer lightProgram.Delete()
 
 	Water := objects.GenneratePlane(50, 50, 200, 200)
-	VAO := createMesh(Water, 3*2*3*3*4, 3*4+2*4+3*4+3*4)
-	log.Println(VAO)
+	VBO, VAO := objects.CreateMesh(Water)
+	wg := waves.WaveGen()
+
 	lightVAO := createVAO(cubeVertices, nil)
 
 	// ensure that triangles that are "behind" others do not draw over top of them
 	gl.Enable(gl.DEPTH_TEST)
 
-	camera := cam.NewFpsCamera(mgl32.Vec3{0, 0, 9}, mgl32.Vec3{0, 1, 0}, -90, 0, window.InputManager())
+	camera := cam.NewFpsCamera(mgl32.Vec3{0, 1, 9}, mgl32.Vec3{0, 1, 0}, -90, 0, window.InputManager())
+	var Time = 0
 
 	for !window.ShouldClose() {
 
@@ -246,8 +215,12 @@ func programLoop(window *win.Window) error {
 		gl.BindVertexArray(VAO)
 
 		// draw each cube after all coordinate system transforms are bound
+		wg.Update(window.SinceLastFrame(), Water, float32(Time))
+		objects.UpdateBuffer(Water, VBO)
+		Time = ((Time + 1) % 3600)
+
 		model := mgl32.Vec3{0, 0, 0}
-		modelTransform := mgl32.Translate3D(model.X(), model.Y(), model.Z()).Mul4(mgl32.Scale3D(.25, .25, .25))
+		modelTransform := mgl32.Translate3D(model.X(), model.Y(), model.Z())
 
 		gl.UniformMatrix4fv(program.GetUniformLocation("world"), 1, false, &modelTransform[0])
 
@@ -256,7 +229,7 @@ func programLoop(window *win.Window) error {
 		gl.Uniform3f(program.GetUniformLocation("lightColor"), 1.0, 1.0, 1.0)
 		// gl.DrawArrays(gl.POINTS, 0, int32(len(windices)))
 
-		//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+		gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 		gl.DrawElements(gl.TRIANGLES, int32(len(Water.Indices)), gl.UNSIGNED_INT, nil)
 
 		gl.BindVertexArray(0)
