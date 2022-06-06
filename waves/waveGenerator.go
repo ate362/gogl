@@ -21,8 +21,8 @@ func WaveGen() *WaveGenerator {
 
 	for i := 0; i < SIZE; i++ {
 		w.amplitude[i] = float32(0.25) / float32(i+1)
-		w.wavelength[i] = float32(2*math.Pi) / float32(i+1)
-		w.speed[i] = float32(.01) + float32(2*math.Pi)*float32(i+1)
+		w.wavelength[i] = float32(2.0*math.Pi) / float32(i+1)
+		w.speed[i] = float32(1) + float32(2)*float32(i+1)
 		v := mgl32.DegToRad(360.0 / float32(SIZE*(i+1)))
 		w.direction[i] = mgl32.Vec2{float32(math.Cos(float64(v))), float32(math.Sin(float64(v)))}
 	}

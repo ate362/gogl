@@ -9,6 +9,7 @@ Shows how the basic usage of color for 3D objects
 import (
 	"log"
 	"runtime"
+	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -72,9 +73,12 @@ var cubeVertices = []float32{
 	1.0, 1.0, 1.0, 0.0, 1.0,
 }
 
+var start = time.Now()
+
 func init() {
 	// GLFW event handling must be run on the main OS thread
 	runtime.LockOSThread()
+
 }
 
 func main() {
@@ -181,7 +185,6 @@ func programLoop(window *win.Window) error {
 	gl.Enable(gl.DEPTH_TEST)
 
 	camera := cam.NewFpsCamera(mgl32.Vec3{0, 1, 9}, mgl32.Vec3{0, 1, 0}, -90, 0, window.InputManager())
-	var Time = 0
 
 	for !window.ShouldClose() {
 
@@ -215,9 +218,8 @@ func programLoop(window *win.Window) error {
 		gl.BindVertexArray(VAO)
 
 		// draw each cube after all coordinate system transforms are bound
-		wg.Update(window.SinceLastFrame(), Water, float32(Time))
+		wg.Update(window.SinceLastFrame(), Water, float32(time.Since(start).Minutes()))
 		objects.UpdateBuffer(Water, VBO)
-		Time = ((Time + 1) % 3600)
 
 		model := mgl32.Vec3{0, 0, 0}
 		modelTransform := mgl32.Translate3D(model.X(), model.Y(), model.Z())
@@ -229,8 +231,8 @@ func programLoop(window *win.Window) error {
 		gl.Uniform3f(program.GetUniformLocation("lightColor"), 1.0, 1.0, 1.0)
 		// gl.DrawArrays(gl.POINTS, 0, int32(len(windices)))
 
-		gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-		gl.DrawElements(gl.TRIANGLES, int32(len(Water.Indices)), gl.UNSIGNED_INT, nil)
+		//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+		gl.DrawElements(gl.POINTS, int32(len(Water.Indices)), gl.UNSIGNED_INT, nil)
 
 		gl.BindVertexArray(0)
 
