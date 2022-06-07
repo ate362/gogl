@@ -1,9 +1,9 @@
 package gfx
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
-	"fmt"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
@@ -13,7 +13,7 @@ type Shader struct {
 }
 
 type Program struct {
-	handle uint32
+	Handle  uint32
 	shaders []*Shader
 }
 
@@ -25,32 +25,32 @@ func (prog *Program) Delete() {
 	for _, shader := range prog.shaders {
 		shader.Delete()
 	}
-	gl.DeleteProgram(prog.handle)
+	gl.DeleteProgram(prog.Handle)
 }
 
 func (prog *Program) Attach(shaders ...*Shader) {
 	for _, shader := range shaders {
-		gl.AttachShader(prog.handle, shader.handle)
+		gl.AttachShader(prog.Handle, shader.handle)
 		prog.shaders = append(prog.shaders, shader)
 	}
 }
 
 func (prog *Program) Use() {
-	gl.UseProgram(prog.handle)
+	gl.UseProgram(prog.Handle)
 }
 
 func (prog *Program) Link() error {
-	gl.LinkProgram(prog.handle)
-	return getGlError(prog.handle, gl.LINK_STATUS, gl.GetProgramiv, gl.GetProgramInfoLog,
+	gl.LinkProgram(prog.Handle)
+	return getGlError(prog.Handle, gl.LINK_STATUS, gl.GetProgramiv, gl.GetProgramInfoLog,
 		"PROGRAM::LINKING_FAILURE")
 }
 
 func (prog *Program) GetUniformLocation(name string) int32 {
-	return gl.GetUniformLocation(prog.handle, gl.Str(name + "\x00"))
+	return gl.GetUniformLocation(prog.Handle, gl.Str(name+"\x00"))
 }
 
 func NewProgram(shaders ...*Shader) (*Program, error) {
-	prog := &Program{handle:gl.CreateProgram()}
+	prog := &Program{Handle: gl.CreateProgram()}
 	prog.Attach(shaders...)
 
 	if err := prog.Link(); err != nil {
@@ -72,7 +72,7 @@ func NewShader(src string, sType uint32) (*Shader, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Shader{handle:handle}, nil
+	return &Shader{handle: handle}, nil
 }
 
 func NewShaderFromFile(file string, sType uint32) (*Shader, error) {
@@ -86,11 +86,11 @@ func NewShaderFromFile(file string, sType uint32) (*Shader, error) {
 	gl.ShaderSource(handle, 1, glSrc, nil)
 	gl.CompileShader(handle)
 	err = getGlError(handle, gl.COMPILE_STATUS, gl.GetShaderiv, gl.GetShaderInfoLog,
-	                  "SHADER::COMPILE_FAILURE::" + file)
+		"SHADER::COMPILE_FAILURE::"+file)
 	if err != nil {
 		return nil, err
 	}
-	return &Shader{handle:handle}, nil
+	return &Shader{handle: handle}, nil
 }
 
 type getObjIv func(uint32, uint32, *int32)

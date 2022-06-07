@@ -146,6 +146,11 @@ func createVAO(vertices []float32, indices []uint32) uint32 {
 
 func programLoop(window *win.Window) error {
 
+	waterVertShader, err := gfx.NewShaderFromFile("shaders/water.vert", gl.VERTEX_SHADER)
+	if err != nil {
+		return err
+	}
+
 	// the linked shader program determines how the data will be rendered
 	vertShader, err := gfx.NewShaderFromFile("shaders/basic.vert", gl.VERTEX_SHADER)
 	if err != nil {
@@ -156,6 +161,12 @@ func programLoop(window *win.Window) error {
 	if err != nil {
 		return err
 	}
+
+	waterProgram, err := gfx.NewProgram(waterVertShader, fragShader)
+	if err != nil {
+		return err
+	}
+	defer waterProgram.Delete()
 
 	program, err := gfx.NewProgram(vertShader, fragShader)
 	if err != nil {
@@ -177,7 +188,7 @@ func programLoop(window *win.Window) error {
 
 	Water := objects.GenneratePlane(50, 50, 200, 200)
 	VBO, VAO := objects.CreateMesh(Water)
-	wg := waves.WaveGen()
+	wg := waves.WavGenGPU(waterProgram)
 
 	lightVAO := createVAO(cubeVertices, nil)
 
@@ -210,29 +221,31 @@ func programLoop(window *win.Window) error {
 		lightTransform := mgl32.Translate3D(lightPos.X(), lightPos.Y(), lightPos.Z()).Mul4(
 			mgl32.Scale3D(.25, .25, .25))
 
-		program.Use()
-		gl.UniformMatrix4fv(program.GetUniformLocation("camera"), 1, false, &camTransform[0])
-		gl.UniformMatrix4fv(program.GetUniformLocation("project"), 1, false,
+		waterProgram.Use()
+		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("camera"), 1, false, &camTransform[0])
+		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("project"), 1, false,
 			&projectTransform[0])
 
 		gl.BindVertexArray(VAO)
 
 		// draw each cube after all coordinate system transforms are bound
-		wg.Update(window.SinceLastFrame(), Water, float32(time.Since(start).Minutes()))
+
+		//float32(time.Since(start).Minutes()
+		wg.UpdateGPU(window.SinceLastFrame())
 		objects.UpdateBuffer(Water, VBO)
 
 		model := mgl32.Vec3{0, 0, 0}
 		modelTransform := mgl32.Translate3D(model.X(), model.Y(), model.Z())
 
-		gl.UniformMatrix4fv(program.GetUniformLocation("world"), 1, false, &modelTransform[0])
+		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("world"), 1, false, &modelTransform[0])
 
 		// obj is colored, light is white
-		gl.Uniform3f(program.GetUniformLocation("objectColor"), 1.0, 0.5, 0.31)
-		gl.Uniform3f(program.GetUniformLocation("lightColor"), 1.0, 1.0, 1.0)
+		gl.Uniform3f(waterProgram.GetUniformLocation("objectColor"), 1.0, 0.5, 0.31)
+		gl.Uniform3f(waterProgram.GetUniformLocation("lightColor"), 1.0, 1.0, 1.0)
 		// gl.DrawArrays(gl.POINTS, 0, int32(len(windices)))
 
-		//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-		gl.DrawElements(gl.POINTS, int32(len(Water.Indices)), gl.UNSIGNED_INT, nil)
+		gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+		gl.DrawElements(gl.TRIANGLES, int32(len(Water.Indices)), gl.UNSIGNED_INT, nil)
 
 		gl.BindVertexArray(0)
 
