@@ -41,6 +41,19 @@ func CreateMesh(geo *Geometry) (uint32, uint32) {
 
 	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, Stride*4, offset)
 	gl.EnableVertexAttribArray(0)
+	offset += 3 * 4
+
+	gl.VertexAttribPointerWithOffset(1, 3, gl.FLOAT, false, Stride*4, offset)
+	gl.EnableVertexAttribArray(0)
+	offset += 3 * 4
+
+	gl.VertexAttribPointerWithOffset(2, 2, gl.FLOAT, false, Stride*4, offset)
+	gl.EnableVertexAttribArray(0)
+	offset += 2 * 4
+
+	gl.VertexAttribPointerWithOffset(3, 3, gl.FLOAT, false, Stride*4, offset)
+	gl.EnableVertexAttribArray(0)
+	offset += 3 * 4
 
 	// unbind the VAO (safe practice so we don't accidentally (mis)configure it later)
 	gl.BindVertexArray(0)

@@ -218,13 +218,18 @@ func programLoop(window *win.Window) error {
 
 		camTransform := camera.GetTransform()
 		lightPos := mgl32.Vec3{0, 1, 0}
-		lightTransform := mgl32.Translate3D(lightPos.X(), lightPos.Y(), lightPos.Z()).Mul4(
-			mgl32.Scale3D(.25, .25, .25))
+		lightTransform := mgl32.Translate3D(lightPos.X(), lightPos.Y(), lightPos.Z()).Mul4(mgl32.Scale3D(.25, .25, .25))
+
+		model := mgl32.Vec3{0, 0, 0}
+		modelTransform := mgl32.Translate3D(model.X(), model.Y(), model.Z())
+
+		inverseTranspose := modelTransform.Transpose().Inv()
 
 		waterProgram.Use()
 		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("camera"), 1, false, &camTransform[0])
-		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("project"), 1, false,
-			&projectTransform[0])
+		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("project"), 1, false, &projectTransform[0])
+		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("world"), 1, false, &modelTransform[0])
+		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("inverseTranspose"), 1, false, &inverseTranspose[0])
 
 		gl.BindVertexArray(VAO)
 
@@ -233,11 +238,6 @@ func programLoop(window *win.Window) error {
 		//float32(time.Since(start).Minutes()
 		wg.UpdateGPU(window.SinceLastFrame())
 		objects.UpdateBuffer(Water, VBO)
-
-		model := mgl32.Vec3{0, 0, 0}
-		modelTransform := mgl32.Translate3D(model.X(), model.Y(), model.Z())
-
-		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("world"), 1, false, &modelTransform[0])
 
 		// obj is colored, light is white
 		gl.Uniform3f(waterProgram.GetUniformLocation("objectColor"), 1.0, 0.5, 0.31)

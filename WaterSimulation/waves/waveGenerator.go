@@ -79,7 +79,7 @@ func (w *WaveGenerator) UpdateCPU(time float64, geo *objects.Geometry) {
 }
 
 func (gwg *WaveGeneratorGPU) UpdateGPU(time float64) {
-	gwg.wg.time += float32(time / 10)
+	gwg.wg.time = gwg.wg.time + float32(time/10)
 	gl.Uniform1f(gwg.uTime, gwg.wg.time)
 	gl.Uniform1i(gwg.uNumWaves, SIZE)
 	gl.Uniform1fv(gwg.uAmplitude, SIZE, &(gwg.wg.amplitude)[0])
