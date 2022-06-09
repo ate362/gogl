@@ -28,14 +28,28 @@ uniform WaterDeformer waterDeformer;
 
 float wave(int i, float x, float z);
 float waveHeight(float x, float z);
+float dWavedx(int i, float x, float z);
+float dWavedz(int i, float x, float z);
+vec3 waveNormal(float x, float z);
 
-out vec2 TexCoord;
+out VS_OUT
+{
+	vec4 position;
+	vec4 normal;
+	vec2 texCoords;
+} vs_out;
 
 void main()
 {	
 	vec3 deformedPosition = position;
+    vec3 deformedNormal = waveNormal(deformedPosition.x, deformedPosition.z);
 
-    deformedPosition.y = waveHeight(deformedPosition.x, deformedPosition.z);    
+    deformedPosition.y = waveHeight(deformedPosition.x, deformedPosition.z); 
+
+    vs_out.position  = world * vec4(deformedPosition, 1.0f);
+	vs_out.normal 	 = inverseTranspose * vec4(deformedNormal, 0.0f);
+	vs_out.texCoords = texCoords;
+
     gl_Position = project * camera * world * vec4(deformedPosition, 1.0f);        
 }
 
@@ -55,4 +69,37 @@ float waveHeight(float x, float z)
     for (int i = 0; i < waterDeformer.numWaves; ++i)
         height += wave(i, x, z);        
     return height;
+}
+
+float dWavedx(int i, float x, float z)
+{
+    float frequency = 2 * PI / waterDeformer.wavelength[i];
+    float phase = waterDeformer.speed[i] * frequency;
+    // float theta = dot(waterDeformer.direction[i], vec2(x, z));
+    float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
+    float A = waterDeformer.amplitude[i] * waterDeformer.direction[i].x * frequency;
+    return A * cos(theta * frequency + waterDeformer.time * phase);
+}
+
+float dWavedz(int i, float x, float z)
+{
+    float frequency = 2 * PI / waterDeformer.wavelength[i];
+    float phase = waterDeformer.speed[i] * frequency;
+    // float theta = dot(waterDeformer.direction[i], vec2(x, z));
+    float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
+    float A = waterDeformer.amplitude[i] * waterDeformer.direction[i].y * frequency;
+    return A * cos(theta * frequency + waterDeformer.time * phase);
+}
+
+vec3 waveNormal(float x, float z)
+{
+    float dx = 0.0f;
+    float dz = 0.0f;
+    for (int i = 0; i < waterDeformer.numWaves; ++i)
+    {
+        dx += dWavedx(i, x, z);
+        dz += dWavedz(i, x, z);
+    }
+    vec3 n = vec3(dx, 1.0f, dz);
+    return normalize(n);
 }

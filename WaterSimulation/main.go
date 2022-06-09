@@ -9,7 +9,6 @@ Shows how the basic usage of color for 3D objects
 import (
 	"log"
 	"runtime"
-	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -73,8 +72,6 @@ var cubeVertices = []float32{
 	1.0, 1.0, 1.0, 0.0, 1.0,
 }
 
-var start = time.Now()
-
 func init() {
 	// GLFW event handling must be run on the main OS thread
 	runtime.LockOSThread()
@@ -92,6 +89,7 @@ func main() {
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+	glfw.WindowHint(glfw.Samples, 16)
 
 	window := win.NewWindow(1280, 720, "Water Simulation")
 
@@ -151,6 +149,11 @@ func programLoop(window *win.Window) error {
 		return err
 	}
 
+	waterFragShader, err := gfx.NewShaderFromFile("shaders/water.frag", gl.FRAGMENT_SHADER)
+	if err != nil {
+		return err
+	}
+
 	// the linked shader program determines how the data will be rendered
 	vertShader, err := gfx.NewShaderFromFile("shaders/basic.vert", gl.VERTEX_SHADER)
 	if err != nil {
@@ -162,7 +165,7 @@ func programLoop(window *win.Window) error {
 		return err
 	}
 
-	waterProgram, err := gfx.NewProgram(waterVertShader, fragShader)
+	waterProgram, err := gfx.NewProgram(waterVertShader, waterFragShader)
 	if err != nil {
 		return err
 	}
@@ -186,7 +189,7 @@ func programLoop(window *win.Window) error {
 	}
 	defer lightProgram.Delete()
 
-	Water := objects.GenneratePlane(50, 50, 200, 200)
+	Water := objects.GenneratePlane(10, 10, 200, 200)
 	VBO, VAO := objects.CreateMesh(Water)
 	wg := waves.WavGenGPU(waterProgram)
 
@@ -244,10 +247,16 @@ func programLoop(window *win.Window) error {
 		gl.Uniform3f(waterProgram.GetUniformLocation("lightColor"), 1.0, 1.0, 1.0)
 		// gl.DrawArrays(gl.POINTS, 0, int32(len(windices)))
 
-		gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+		gl.Enable(gl.MULTISAMPLE)
+		gl.Enable(gl.BLEND)
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+		//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 		gl.DrawElements(gl.TRIANGLES, int32(len(Water.Indices)), gl.UNSIGNED_INT, nil)
 
 		gl.BindVertexArray(0)
+
+		gl.Disable(gl.BLEND)
 
 		// Draw the light obj after the other boxes using its separate shader program
 		// this means that we must re-bind any uniforms
