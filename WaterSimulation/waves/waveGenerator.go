@@ -9,7 +9,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-const SIZE = 6
+const SIZE = 4
 
 type WaveGeneratorGPU struct {
 	wg          *WaveGenerator

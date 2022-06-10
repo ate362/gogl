@@ -2,7 +2,7 @@
 #extension GL_ARB_explicit_uniform_location : enable
 #define PI 3.14159f
 #define g 9.81f
-#define SIZE 6
+#define SIZE 4
 
 // Input attributes base: 0
 layout (location = 0) in vec3 position;

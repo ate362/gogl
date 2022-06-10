@@ -229,6 +229,7 @@ func programLoop(window *win.Window) error {
 		inverseTranspose := modelTransform.Transpose().Inv()
 
 		waterProgram.Use()
+		gl.Uniform3fv(waterProgram.GetUniformLocation("eyePosition"), 1, &camera.GetPosition()[0])
 		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("camera"), 1, false, &camTransform[0])
 		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("project"), 1, false, &projectTransform[0])
 		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("world"), 1, false, &modelTransform[0])
