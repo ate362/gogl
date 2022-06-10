@@ -4,12 +4,13 @@ import (
 	"WaterSimulation/gfx"
 	"WaterSimulation/objects"
 	"math"
+	"math/rand"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-const SIZE = 4
+const SIZE = 6
 
 type WaveGeneratorGPU struct {
 	wg          *WaveGenerator
@@ -31,12 +32,14 @@ type WaveGenerator struct {
 
 func WaveGen() *WaveGenerator {
 	w := WaveGenerator{}
+	rand.Seed(42)
 
+	// r := rand.Float32()
 	for i := 0; i < SIZE; i++ {
-		w.amplitude[i] = float32(0.25) / float32(i+1)
+		w.amplitude[i] = float32(0.2) / float32(i+1)
 		w.wavelength[i] = float32(2.0*math.Pi) / float32(i+1)
-		w.speed[i] = float32(1) + float32(2)*float32(i+1)
-		v := mgl32.DegToRad(360.0 / float32(SIZE*(i+1)))
+		w.speed[i] = float32(1) + float32(.2)*float32(i+1)
+		v := mgl32.DegToRad(-1440 / float32(SIZE*(i+1)))
 		w.direction[i] = mgl32.Vec2{float32(math.Cos(float64(v))), float32(math.Sin(float64(v)))}
 	}
 

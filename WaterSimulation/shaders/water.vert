@@ -2,7 +2,7 @@
 #extension GL_ARB_explicit_uniform_location : enable
 #define PI 3.14159f
 #define g 9.81f
-#define SIZE 4
+#define SIZE 6
 
 // Input attributes base: 0
 layout (location = 0) in vec3 position;
@@ -56,10 +56,10 @@ void main()
 
 float wave(int i, float x, float z)
 {
-    float frequency =  2 * PI / waterDeformer.wavelength[i];
+    float frequency = 2 * PI / waterDeformer.wavelength[i];
     float phase = waterDeformer.speed[i] * frequency;
-    // float theta = dot(waterDeformer.direction[i], vec2(x, z));
-    float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
+    float theta = dot(waterDeformer.direction[i], vec2(x, z));
+    //float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
     return waterDeformer.amplitude[i] * sin(theta * frequency + waterDeformer.time * phase);
 }
 
@@ -75,8 +75,8 @@ float dWavedx(int i, float x, float z)
 {
     float frequency = 2 * PI / waterDeformer.wavelength[i];
     float phase = waterDeformer.speed[i] * frequency;
-    // float theta = dot(waterDeformer.direction[i], vec2(x, z));
-    float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
+    float theta = dot(waterDeformer.direction[i], vec2(x, z));
+    // float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
     float A = waterDeformer.amplitude[i] * waterDeformer.direction[i].x * frequency;
     return A * cos(theta * frequency + waterDeformer.time * phase);
 }
@@ -85,8 +85,8 @@ float dWavedz(int i, float x, float z)
 {
     float frequency = 2 * PI / waterDeformer.wavelength[i];
     float phase = waterDeformer.speed[i] * frequency;
-    // float theta = dot(waterDeformer.direction[i], vec2(x, z));
-    float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
+    float theta = dot(waterDeformer.direction[i], vec2(x, z));
+    // float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
     float A = waterDeformer.amplitude[i] * waterDeformer.direction[i].y * frequency;
     return A * cos(theta * frequency + waterDeformer.time * phase);
 }

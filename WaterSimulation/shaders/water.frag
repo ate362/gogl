@@ -8,8 +8,8 @@ const vec3 diffuse = WATER_BLUE;//vec3(0.25, 0.0, 0.0);
 const vec3 specular = vec3(1.0, 1.0, 1.0);
 const float shininess = 20.0;
 const vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
-const vec3 lightPos = vec3(0,1,0);
 
+uniform vec3 lightPos;
 uniform vec3 eyePosition;
 
 out vec4 color;

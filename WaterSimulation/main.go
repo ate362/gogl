@@ -189,7 +189,7 @@ func programLoop(window *win.Window) error {
 	}
 	defer lightProgram.Delete()
 
-	Water := objects.GenneratePlane(10, 10, 200, 200)
+	Water := objects.GenneratePlane(100, 100, 1000, 1000)
 	VBO, VAO := objects.CreateMesh(Water)
 	wg := waves.WavGenGPU(waterProgram)
 
@@ -220,7 +220,7 @@ func programLoop(window *win.Window) error {
 			100.0)
 
 		camTransform := camera.GetTransform()
-		lightPos := mgl32.Vec3{0, 1, 0}
+		lightPos := mgl32.Vec3{0, 8, -8}
 		lightTransform := mgl32.Translate3D(lightPos.X(), lightPos.Y(), lightPos.Z()).Mul4(mgl32.Scale3D(.25, .25, .25))
 
 		model := mgl32.Vec3{0, 0, 0}
@@ -229,6 +229,7 @@ func programLoop(window *win.Window) error {
 		inverseTranspose := modelTransform.Transpose().Inv()
 
 		waterProgram.Use()
+		gl.Uniform3fv(waterProgram.GetUniformLocation("lightPos"), 1, &lightPos[0])
 		gl.Uniform3fv(waterProgram.GetUniformLocation("eyePosition"), 1, &camera.GetPosition()[0])
 		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("camera"), 1, false, &camTransform[0])
 		gl.UniformMatrix4fv(waterProgram.GetUniformLocation("project"), 1, false, &projectTransform[0])
