@@ -1,9 +1,9 @@
 #version 410 core
 #define SPECULAR_STRENGTH 2
 
-const vec3 WATER_BLUE = vec3(64.0f/255.0f, 164.0f/255.0f, 223.0f/255.0f);
+const vec3 WATER_BLUE = vec3(15.0f/255.0f, 94.0f/255.0f, 156.0f/255.0f);
 
-const vec3 ambient = vec3(0.28f, 0.3f, 0.25f);
+const vec3 ambient = vec3(35.f/255.0f, 137.0f/255.0f, 218.0f/255.0f);
 const vec3 diffuse = WATER_BLUE;//vec3(0.25, 0.0, 0.0);
 const vec3 specular = vec3(1.0, 1.0, 1.0);
 const float shininess = 20.0;

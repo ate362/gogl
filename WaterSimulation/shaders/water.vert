@@ -39,6 +39,10 @@ out VS_OUT
 	vec2 texCoords;
 } vs_out;
 
+float rand(vec2 co){
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453) * 0.5 - 1.0;
+}
+
 void main()
 {	
 	vec3 deformedPosition = position;
@@ -67,8 +71,9 @@ float waveHeight(float x, float z)
 {
     float height = 0.0f;
     for (int i = 0; i < waterDeformer.numWaves; ++i)
-        height += wave(i, x, z);        
-    return height;
+        height += wave(i, x, z);   
+    float h = rand(vec2(x, z));     
+    return height+h*.07f;
 }
 
 float dWavedx(int i, float x, float z)
@@ -100,6 +105,7 @@ vec3 waveNormal(float x, float z)
         dx += dWavedx(i, x, z);
         dz += dWavedz(i, x, z);
     }
-    vec3 n = vec3(dx, 1.0f, dz);
+    float h = rand(vec2(x, z));
+    vec3 n = vec3(dx, h*.2, dz);
     return normalize(n);
 }
