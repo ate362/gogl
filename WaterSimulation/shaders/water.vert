@@ -62,8 +62,8 @@ float wave(int i, float x, float z)
 {
     float frequency = 2 * PI / waterDeformer.wavelength[i];
     float phase = waterDeformer.speed[i] * frequency;
-    float theta = dot(waterDeformer.direction[i], vec2(x, z));
-    //float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
+    //float theta = dot(waterDeformer.direction[i], vec2(x, z));
+    float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
     return waterDeformer.amplitude[i] * sin(theta * frequency + waterDeformer.time * phase);
 }
 
@@ -73,15 +73,15 @@ float waveHeight(float x, float z)
     for (int i = 0; i < waterDeformer.numWaves; ++i)
         height += wave(i, x, z);   
     float h = rand(vec2(x, z));     
-    return height+h*.07f;
+    return height;//+h*.07f;
 }
 
 float dWavedx(int i, float x, float z)
 {
     float frequency = 2 * PI / waterDeformer.wavelength[i];
     float phase = waterDeformer.speed[i] * frequency;
-    float theta = dot(waterDeformer.direction[i], vec2(x, z));
-    // float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
+    //float theta = dot(waterDeformer.direction[i], vec2(x, z));
+    float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
     float A = waterDeformer.amplitude[i] * waterDeformer.direction[i].x * frequency;
     return A * cos(theta * frequency + waterDeformer.time * phase);
 }
@@ -90,8 +90,8 @@ float dWavedz(int i, float x, float z)
 {
     float frequency = 2 * PI / waterDeformer.wavelength[i];
     float phase = waterDeformer.speed[i] * frequency;
-    float theta = dot(waterDeformer.direction[i], vec2(x, z));
-    // float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
+    //float theta = dot(waterDeformer.direction[i], vec2(x, z));
+    float theta = -dot(normalize(vec2(x, z) - vec2(0, 0)),vec2(x,z));
     float A = waterDeformer.amplitude[i] * waterDeformer.direction[i].y * frequency;
     return A * cos(theta * frequency + waterDeformer.time * phase);
 }
@@ -106,6 +106,6 @@ vec3 waveNormal(float x, float z)
         dz += dWavedz(i, x, z);
     }
     float h = rand(vec2(x, z));
-    vec3 n = vec3(dx, h*.2, dz);
+    vec3 n = vec3(dx, 1, dz);
     return normalize(n);
 }

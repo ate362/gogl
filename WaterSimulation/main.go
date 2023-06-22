@@ -189,7 +189,7 @@ func programLoop(window *win.Window) error {
 	}
 	defer lightProgram.Delete()
 
-	Water := objects.GenneratePlane(100, 100, 1000, 1000)
+	Water := objects.GenneratePlane(40, 40, 1000, 1000)
 	VBO, VAO := objects.CreateMesh(Water)
 	wg := waves.WavGenGPU(waterProgram)
 
